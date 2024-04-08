@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte du Monde</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        @font-face {
+            font-family: 'Quicksand';
+            src: url('Quicksandt.ttf') format('truetype');
+           
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('fond.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+        }
+
+        #menu {
+            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #fff; 
+            margin-left: 20%;
+            margin-right: 20%;
+        }
+        #game {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #3498db; 
+            color: #fff; 
+        }
+        #menu button {
+            font-size: 15px;
+            background-color: #ffffff; 
+            color: #404044;
+            border: none;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: background-color 0.3s ease;
+            height: 40px; 
+            width: 150px;
+        }
+
+        #menu button:hover {
+            background-color: rgb(230, 230, 230); 
+        }
+
+        .titre-personnalise {
+            font-size: 40px; 
+            color: #ffffff;
+            font-family: Quicksand, Arial, sans-serif;
+            text-align: center;
+            margin-top: 80px;
+            margin-bottom: 300px;
+            font-weight: normal;
+        }
+
+
+        #game {
+            display: none; 
+            background-color: #3498db; 
+        }
+        #map {
+            height: 70vh;
+            width: 80%;
+            margin-bottom: 20px;
+        }
+        #guessInput {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+        }
+        #feedback {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            color: #fff; 
+        }
+
+        #wrongGuesses {
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            font-size: 14px;
+            color: #fff; 
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 36px;
+            text-align: center;
+            color: #fff; 
+        }
+        
+        #locations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .locationCheckbox {
+            margin: 5px;
+        }
+        #buttons {
+            margin-top: 40px;
+        }
+        #buttons button {
+            margin: 0 10px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #buttons button:hover {
+            background-color: #2980b9;
+        }
+
+        #bouton-jouer {
+            margin-bottom: 300px;
+            margin-top: 20px;
+        }
+
+        .continent {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+
+
+        .continent-subdiv {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 20px; 
+            max-height: 200px;
+            overflow-y: auto;
+            flex-direction: column;
+        }
+
+        .continent-row {
+            width: auto;
+            margin-right: 20px;
+            border: 1px solid #ccc; 
+            padding: 10px; 
+        }
+
+        .select-all-container {
+            padding: 8px; 
+            margin-bottom: 8px;
+            font-family: Quicksand, Arial, sans-serif;
+            color: #2980b9;
+
+        }
+
+        .category-title {
+            color: #404044;
+            font-size: 20px;
+            font-weight: bold;
+            font-family: Quicksand, Arial, sans-serif;
+        }
+
+        .category-container {
+            text-align: left;
+            background-color: #f5f5f4;
+            
+        }
+
+        .custom-label {
+            font-family: Quicksand, Arial, sans-serif;
+            font-size: 16px;
+            color: #5c5c62;
+        }
+            
+
+    </style>
+</head>
+<body>
+
+<div id="menu">
+    <h1 class="titre-personnalise" >Explorez le Monde</h1>
+    <div id="locations"></div>
+    <div id="buttons">
+        <button onclick="checkAll()">Tout cocher</button>
+        <button onclick="uncheckAll()">Tout décocher</button>
+    </div>
+    <button id="bouton-jouer" onclick="startGame()">Jouer</button>
+</div>
+
+<div id="game">
+    <div id="map"></div>
+    <input type="text" id="guessInput" placeholder="Devinez le pays">
+    <div id="feedback"></div>
+    <div id="counter">Réussites: 0 | Erreurs: 0</div>
+    <div id="wrongGuesses">
+        <h2>Pays incorrects :</h2>
+        <ul id="wrongGuessesList"></ul>
+    </div>
+</div>
+
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    var countries = {
+        "Sénégal": [14.4974, -14.4524],
+        "Côte-d'Ivoire": [7.5400, -5.5471],
+        "Togo": [8.6195, 0.8248],
+        "Bénin": [9.3077, 2.3158],
+        "Nigeria": [9.0820, 8.6753],
+        "Cameroun": [3.8480, 11.5021],
+        "République centrafricaine": [6.6111, 20.9394],
+        "Gabon": [-0.8037, 11.6094],
+        "Congo": [-0.2280, 15.8277],
+        "Rép. dém. du Congo": [-4.0383, 21.7587],
+        "Ouganda": [1.3733, 32.2903],
+        "Rwanda": [-1.9403, 29.8739],
+        "Burundi": [-3.3731, 29.9189],
+        "Kenya": [1.2921, 36.8219],
+        "Tanzanie": [-6.369028, 34.8888],
+        "Angola": [-11.2027, 17.8739],
+        "Mozambique": [-18.6657, 35.5296],
+        "Namibie": [-22.9576, 18.4904],
+        "Botswana": [-22.3285, 24.6849],
+        "Zimbabwe": [-19.0154, 29.1549],
+        "Afrique du Sud": [-30.5595, 22.9375],
+        "Madagascar": [-18.8792, 47.5079],
+        "Turquie": [38.9637, 35.2433],
+        "Liban": [33.8547, 35.8623],
+        "Syrie": [34.8021, 38.9968],
+        "Israël": [31.0461, 34.8516],
+        "Jordanie": [30.5852, 36.2384],
+        "Irak": [33.3152, 44.3661],
+        "Koweït": [29.3759, 47.9774],
+        "Arabie saoudite": [23.8859, 45.0792],
+        "Qatar": [25.2769, 51.5200],
+        "Emirats Arabes Unis": [23.4241, 53.8478],
+        "Yémen": [15.5524, 48.5164],
+        "Oman": [20.7965, 56.5290],
+        "Iran": [32.4279, 53.6880],
+        "Kazakhstan": [48.0196, 66.9237],
+        "Ouzbékistan": [41.3775, 64.5853],
+        "Turkménistan": [38.9697, 59.5563],
+        "Afghanistan": [33.9391, 67.7100],
+        "Pakistan": [30.3753, 69.3451],
+        "Inde": [20.5937, 78.9629],
+        "Sri Lanka": [7.8731, 80.7718],
+        "Népal": [28.3949, 84.1240],
+        "Bangladesh": [23.6850, 90.3563],
+        "Birmanie": [21.9162, 95.9560],
+        "Thaïlande": [15.8700, 100.9925],
+        "Laos": [19.8563, 102.4955],
+        "Vietnam": [14.0583, 108.2772],
+        "Cambodge": [12.5657, 104.9910],
+        "Malaisie": [4.2105, 101.9758],
+        "Singapour": [1.3521, 103.8198],
+        "Indonésie": [-0.7893, 113.9213],
+        "Philippines": [12.8797, 121.7740],
+        "Chine": [35.8617, 104.1954],
+        "Mongolie": [46.8625, 103.8467],
+        "Taïwan": [23.6978, 120.9605],
+        "Corée du Sud": [35.9078, 127.7669],
+        "Japon": [36.2048, 138.2529],
+        "Australie": [-25.2744, 133.7751],
+        "Nouvelle-Zélande": [-40.9006, 174.8860],
+
+        //Mers
+        "Golfe d'Alaska": [58.7920, -152.2772],
+        "Baie d'Hudson": [58.8808, -89.9625],
+        "Golfe du Mexique": [25.0856, -90.9805],
+        "Mer des Caraïbes": [15.2761, -69.7181],
+        "Mer Baltique": [57.9586, 20.3422],
+        "Mer du Nord": [56.2309, 3.8701],
+        "Manche": [49.7300, -0.4200],
+        "Mer Méditerranée": [35.0000, 18.0000],
+        "Mer Noire": [44.1726, 34.1298],
+        "Mer Rouge": [21.4167, 39.8167],
+
+        "Golfe de Guinée": [2.0, 3.0], // Coordonnées approximatives
+        "Golfe d'Aden": [12.0, 48.0], // Coordonnées approximatives
+        "Mer de Corail": [-16.0, 150.0], // Coordonnées approximatives
+        "Mer Rouge": [20.245477, 38.585950], // Coordonnées approximatives
+        "Golfe Persique": [27.183046, 50.994361], // Coordonnées approximatives
+        "Mer d'Oman": [17.578337, 61.209517], // Coordonnées approximatives
+        "Golfe du Bengale": [15.0, 88.0], // Coordonnées approximatives
+        "Mer de Chine méridionale": [10.0, 115.0], // Coordonnées approximatives
+        "Mer de Chine orientale": [30.354228, 125.514867], // Coordonnées approximatives
+        "Mer du Japon": [38.0, 137.0], // Coordonnées approximatives
+
+        //Seuils maritimes
+        //Détroits
+        "Détroit de Malacca": [4.0, 100.5], // Coordonnées approximatives
+        "Détroit de la Sonde": [-6.0, 105.5], // Coordonnées approximatives
+        "Détroit du Pas de Calais": [50.9978, 1.9181],
+        "Détroit de Gibraltar": [35.9996, -5.9114],
+        "Détroit de Bab-el-Mandeb": [12.4281, 43.4075],
+        "Détroit de Béring": [65.0000, -168.0000],
+        //Caps
+        "Cap de Bonne-Espérance": [-34.5, 18.5], // Coordonnées approximatives
+        "Cap Horn": [-55.9899, -67.2653],
+        "Cap Finisterre": [42.8864, -9.2711],
+        //Canaux
+        "Canal de Suez": [30.5852, 32.2651],
+        "Canal de Panama": [9.1000, -79.6667],
+        "Canal du Mozambique": [-17.0, 41.0], // Coordonnées approximatives
+
+        // DROM
+        "Martinique": [14.6415, -61.0242],
+        "Guadeloupe": [16.2650, -61.5510],
+        "Guyane": [3.9339, -53.1258],
+        "Mayotte": [-12.8275, 45.1662],
+        "Réunion": [-21.1151, 55.5364],
+
+        //Autres territoires outre mer
+        "Saint-Barthélemy": [17.9000, -62.8333],
+        "Saint-Martin": [18.0708, -63.0501],
+        "Saint-Pierre et Miquelon": [46.8852, -56.3159],
+        "Wallis-et-Futuna": [-13.7685, -177.1561],
+        "Polynésie française": [-17.6797, -149.4068],
+        "Nouvelle-Calédonie": [-20.9043, 165.6180],
+        "Archipel Crozet": [-46.4306, 51.8509],
+        "Archipel Kerguelen": [-49.3525, 70.2170],
+        "Saint-Paul": [-38.7167, 77.5333],
+        "Nouvelle-Amsterdam": [-37.8026, 77.5536],
+        "Terre Adélie": [-66.6686, 140.0116],
+
+
+        //27 pays de l ue
+        "Autriche": [47.5162, 14.5501],
+        "Belgique": [50.8503, 4.3517],
+        "Bulgarie": [42.7339, 25.4858],
+        "Chypre": [35.1264, 33.4299],
+        "Croatie": [45.1000, 15.2000],
+        "Danemark": [56.2639, 9.5018],
+        "Espagne": [40.4637, -3.7492],
+        "Estonie": [58.5953, 25.0136],
+        "Finlande": [61.9241, 25.7482],
+        "France": [46.6034, 1.8883],
+        "Grèce": [39.0742, 21.8243],
+        "Hongrie": [47.1625, 19.5033],
+        "Irlande": [53.1424, -7.6921],
+        "Italie": [41.8719, 12.5674],
+        "Lettonie": [56.8796, 24.6032],
+        "Lituanie": [55.1694, 23.8813],
+        "Luxembourg": [49.8153, 6.1296],
+        "Malte": [35.9375, 14.3754],
+        "Pays-Bas": [52.1326, 5.2913],
+        "Pologne": [51.9194, 19.1451],
+        "Portugal": [39.3999, -8.2245],
+        "République tchèque": [49.8175, 15.4729],
+        "Roumanie": [45.9432, 24.9668],
+        "Slovaquie": [48.6690, 19.6990],
+        "Slovénie": [46.1512, 14.9955],
+        "Suède": [60.1282, 18.6435],
+        //Europe
+        "Royaume-Uni": [55.3781, -3.4360],
+        "Islande": [64.9631, -19.0208],
+        "Norvège": [60.4720, 8.4689],
+        "Biélorussie": [53.7098, 27.9534],
+        "Ukraine": [48.3794, 31.1656],
+        "Russie": [61.5240, 105.3188],
+        "Moldavie": [47.4116, 28.3699],
+        "Serbie": [44.0165, 21.0059],
+        "Bosnie-Herzégovine": [43.9159, 17.6791],
+        "Macédoine": [41.6086, 21.7453],
+        "Albanie": [41.1533, 20.1683],
+        //Amérique du nord
+        "Canada": [56.1304, -106.3468],
+        "Etats-Unis": [37.0902, -95.7129],
+        "Mexique": [23.6345, -102.5528],
+        "Guatemala": [15.7835, -90.2308],
+        "Honduras": [15.199999, -86.241905],
+        "Nicaragua": [12.865416, -85.207229],
+        "Panama": [8.537981, -80.782127],
+        "Cuba": [21.521757, -77.781167],
+        "Jamaïque": [18.1096, -77.2975],
+        "Haïti": [18.9712, -72.2852],
+        //Amérique du sud
+        "Colombie": [4.5709, -74.2973],
+        "Equateur": [-1.8312, -78.1834],
+        "Pérou": [-9.1900, -75.0152],
+        "Bolivie": [-16.2902, -63.5887],
+        "Venezuela": [6.4238, -66.5897],
+        "Surinam": [3.9193, -56.0278],
+        "Brésil": [-14.2350, -51.9253],
+        "Chili": [-35.6751, -71.5430],
+        "Paraguay": [-23.4425, -58.4438],
+        "Uruguay": [-32.5228, -55.7658],
+        "Argentine": [-38.4161, -63.6167],
+        //Afrique
+        "Maroc": [31.7917, -7.0926],
+        "Algérie": [28.0339, 1.6596],
+        "Tunisie": [33.8869, 9.5375],
+        "Libye": [26.3351, 17.2283],
+        "Egypte": [26.8206, 30.8025],
+        "Mauritanie": [21.0079, 10.9408],
+        "Mali": [17.5707, -3.9962],
+        "Niger": [17.6078, 8.0817],
+        "Tchad": [15.4542, 18.7322],
+        "Soudan": [12.8628, 30.2176],
+        "Ethiopie": [9.1450, 40.4897],
+        "Somalie": [5.1521, 46.1996],
+}
+
+
+
+
+    var countryKeys = Object.keys(countries).sort(() => Math.random() - 0.5);
+    var currentCountryIndex = 0;
+    var successes = 0;
+    var errors = 0;
+
+    var continents = {
+    "Union européenne": ["Autriche","Belgique","Bulgarie","Chypre","Croatie","Danemark","Espagne","Estonie","Finlande","France","Grèce","Hongrie","Irlande","Italie","Lettonie","Lituanie","Luxembourg","Malte","Pays-Bas","Pologne","Portugal","République tchèque","Roumanie","Slovaquie","Slovénie","Suède"],
+    "Europe du Nord": ["Royaume-Uni", "Islande", "Norvège"],
+    "Europe de l'Est": ["Biélorussie", "Ukraine", "Russie", "Moldavie"],
+    "Europe balkanique": ["Serbie", "Bosnie-Herzégovine", "Macédoine", "Albanie"],
+    "Amérique du Nord": ["Canada", "États-Unis"],
+    "Amérique centrale": ["Mexique", "Guatemala", "Honduras", "Nicaragua", "Panama"],
+    "Amérique du Nord caribéenne": ["Cuba", "Jamaïque", "Haïti"],
+    "Amérique andine": ["Colombie", "Equateur", "Pérou", "Bolivie"],
+    "Amérique du Sud caribéenne": ["Venezuela", "Surinam", "Brésil"],
+    "Le Cône sud": ["Chili", "Paraguay", "Uruguay", "Argentine"],
+    "Afrique du nord": ["Maroc", "Algérie", "Tunisie", "Libye", "Egypte"],
+    "Afrique sahélienne": ["Mauritanie", "Mali", "Niger", "Tchad", "Soudan"],
+    "Corne de l'Afrique": ["Ethiopie", "Somalie"],
+    "Golfe de Guinée": ["Sénégal", "Côte-d'Ivoire", "Togo", "Bénin", "Nigeria", "Cameroun"],
+    "Afrique centrale": ["République centrafricaine", "Gabon", "Congo", "Rép. dém. du Congo"],
+    "Région des Grands Lacs": ["Ouganda", "Rwanda", "Burundi", "Kenya", "Tanzanie"],
+    "Afrique australe": ["Angola", "Mozambique", "Namibie", "Botswana", "Zimbabwe", "Afrique du Sud", "Madagascar"],
+    "Moyen-Orient": ["Turquie", "Liban", "Syrie", "Israël", "Jordanie", "Irak", "Koweït", "Arabie saoudite", "Qatar", "Emirats Arabes Unis", "Yémen", "Oman", "Iran"],
+    "Asie centrale": ["Kazakhstan", "Ouzbékistan", "Turkménistan", "Afghanistan"],
+    "Asie du Sud": ["Pakistan", "Inde", "Sri Lanka", "Népal", "Bangladesh"],
+    "Asie du Sud-Est": ["Birmanie", "Thaïlande", "Laos", "Vietnam", "Cambodge", "Malaisie", "Singapour", "Indonésie", "Philippines"],
+    "Asie de l'Est": ["Chine", "Mongolie", "Taïwan", "Corée du Sud", "Japon"],
+    "Océanie": ["Australie", "Nouvelle-Zélande"],
+    "Mer CONTINENT AMERICAIN": ["Golfe d'Alaska", "Baie d'Hudson", "Golfe du Mexique", "Mer des Caraïbes"],
+    "Mer EUROPE": ["Mer Baltique", "Mer du Nord", "Manche", "Mer Méditerranée", "Mer Noire"],
+    "Mer CONTINENT AFRICAIN": ["Mer Méditerranée", "Mer Rouge", "Golfe de Guinée", "Golfe d'Aden"],
+    "Mer OCÉANIE": ["Mer de Corail"],
+    "Mer CONTINENT ASIATIQUE": ["Mer Rouge", "Golfe d'Aden", "Golfe Persique", "Mer d’Oman", "Golfe du Bengale", "Mer de Chine méridionale", "Mer de Chine orientale", "Mer du Japon"],
+    "Détroits": ["Détroit du Pas de Calais", "Détroit de Gibraltar", "Détroit de Bab-el-Mandeb", "Détroit de Malacca", "Détroit de la Sonde", "Détroit de Béring"],
+    "Caps": ["Cap de Bonne-Espérance", "Cap Horn", "Cap Finisterre"],
+    "Canaux": ["Canal de Suez", "Canal de Panama", "Canal du Mozambique"],
+    "DROM": ["Martinique", "Guadeloupe", "Guyane", "Mayotte", "Réunion"],
+    "Autres territoires d'outre-mer": ["Saint-Barthélemy", "Saint-Martin", "Saint-Pierre et Miquelon", "Wallis-et-Futuna", "Polynésie française", "Nouvelle-Calédonie", "Archipel Crozet", "Archipel Kerguelen", "Saint-Paul", "Nouvelle-Amsterdam", "Terre Adélie"]
+
+};
+
+
+    var selectedLocations = {};
+
+    for (var continent in continents) {
+        continents[continent].forEach(function(location) {
+            selectedLocations[location] = true;
+        });
+    }
+
+    var map = L.map('map').setView([0, 0], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/attribution">CartoDB</a>',
+        subdomains: 'abcd',
+        minZoom: 1,
+        maxZoom: 16,
+        ext: 'png'
+    }).addTo(map);
+
+    var currentMarker = L.marker([0, 0]).addTo(map);
+    L.control.scale().addTo(map);
+
+    function updateMarker() {
+        var currentCountry = countryKeys[currentCountryIndex];
+        var coordinates = countries[currentCountry];
+        currentMarker.setLatLng(coordinates);
+        map.setView(coordinates, 2); 
+    }
+
+    function createCheckbox(location) {
+    var checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "locationCheckbox";
+    checkbox.checked = selectedLocations[location];
+    checkbox.addEventListener("change", function() {
+        selectedLocations[location] = checkbox.checked;
+    });
+
+    var label = document.createElement("label");
+    label.appendChild(document.createTextNode(location));
+    label.classList.add("custom-label");
+
+    var container = document.createElement("div");
+    container.appendChild(checkbox);
+    container.appendChild(label);
+
+    return container;
+}
+
+
+   function createContinentCheckbox(continent) {
+    var checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "continentCheckbox";
+    checkbox.checked = areAllLocationsSelected(continents[continent]);
+    checkbox.addEventListener("change", function() {
+        toggleContinentLocations(continent, checkbox.checked);
+        renderLocationCheckboxes();
+    });
+
+    var label = document.createElement("label");
+    var labelText = document.createTextNode("Sélectionner tout");
+    label.appendChild(labelText);
+
+    var container = document.createElement("div");
+    container.appendChild(checkbox);
+    container.appendChild(label);
+
+    // Appliquer un style visuel différent ou une classe CSS unique
+    container.classList.add("select-all-container");
+
+    return container;
+}
+
+
+function areAllLocationsSelected(locations) {
+    for (var i = 0; i < locations.length; i++) {
+        if (!selectedLocations[locations[i]]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function toggleContinentLocations(continent, isSelected) {
+    continents[continent].forEach(function(location) {
+        selectedLocations[location] = isSelected;
+    });
+}
+
+function renderLocationCheckboxes() {
+    var locationsContainer = document.getElementById("locations");
+    locationsContainer.innerHTML = "";
+
+    for (var continent in continents) {
+        var continentDiv = document.createElement("div");
+        continentDiv.className = "continent continent-row";  
+        continentDiv.innerHTML = "<strong class='category-title'>" + continent + "</strong>";
+        continentDiv.classList.add('category-container');
+        locationsContainer.appendChild(continentDiv);
+
+        var continentSubDiv = document.createElement("div");
+        continentSubDiv.className = "continent-subdiv";
+        continentDiv.appendChild(continentSubDiv);
+
+        continents[continent].forEach(function(location) {
+            var checkbox = createCheckbox(location);
+            continentSubDiv.appendChild(checkbox);
+        });
+
+        var continentCheckbox = createContinentCheckbox(continent);
+        continentSubDiv.appendChild(continentCheckbox);
+
+        locationsContainer.appendChild(document.createElement("br"));
+    }
+}
+
+
+renderLocationCheckboxes();  
+
+
+    function checkAll() {
+        for (var location in selectedLocations) {
+            selectedLocations[location] = true;
+        }
+        renderLocationCheckboxes();
+    }
+
+    function uncheckAll() {
+        for (var location in selectedLocations) {
+            selectedLocations[location] = false;
+        }
+        renderLocationCheckboxes();
+    }
+
+    renderLocationCheckboxes();
+
+    var guessInput = document.getElementById("guessInput");
+    guessInput.addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            checkGuess();
+        }
+    });
+
+    var feedbackElement = document.getElementById("feedback");
+    var counterElement = document.getElementById("counter");
+    var wrongGuesses = [];
+
+
+    function checkGuess() {
+        var userGuess = guessInput.value.trim();
+        var currentCountry = countryKeys[currentCountryIndex];
+
+        if (userGuess === currentCountry) {
+            successes++;
+            feedbackElement.textContent = "Correct! ✔️";
+        } else {
+            errors++;
+            wrongGuesses.push(currentCountry);
+            updateWrongGuesses();
+            feedbackElement.textContent = "Incorrect! ❌ Le pays était : " + countryKeys[currentCountryIndex];
+        }
+
+        counterElement.textContent = "Réussites: " + successes + " | Erreurs: " + errors;
+
+        setTimeout(function() {
+            guessInput.value = "";
+            feedbackElement.textContent = "";
+            currentCountryIndex = getNextCountryIndex();
+            updateMarker();
+        }, 2000);
+    }
+
+    function updateWrongGuesses() {
+    var wrongGuessesList = document.getElementById("wrongGuessesList");
+    wrongGuessesList.innerHTML = ""; // Nettoyer la liste précédente
+
+    wrongGuesses.forEach(function(country) {
+        var listItem = document.createElement("li");
+        listItem.textContent = country;
+        wrongGuessesList.appendChild(listItem);
+        });
+    }
+
+
+    function getNextCountryIndex() {
+        // Trouver le prochain pays sélectionné
+        var nextIndex = currentCountryIndex;
+        do {
+            nextIndex = (nextIndex + 1) % countryKeys.length;
+        } while (!selectedLocations[countryKeys[nextIndex]]);
+        return nextIndex;
+    }
+
+    function startGame() {
+        document.getElementById("menu").style.display = "none";
+        document.getElementById("game").style.display = "flex";
+        updateMarker();
+        map.invalidateSize(); 
+    }
+
+</script>
+
+</body>
+</html>
