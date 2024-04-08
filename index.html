@@ -185,10 +185,18 @@
         }
 
         .category-container {
-            text-align: left;
-            background-color: #f5f5f4;
-            
-        }
+        text-align: left;
+        background-color: #f5f5f4;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .category-container.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
 
         .custom-label {
             font-family: Quicksand, Arial, sans-serif;
@@ -537,8 +545,7 @@
     var container = document.createElement("div");
     container.appendChild(checkbox);
     container.appendChild(label);
-
-    // Appliquer un style visuel différent ou une classe CSS unique
+    
     container.classList.add("select-all-container");
 
     return container;
@@ -564,7 +571,12 @@ function renderLocationCheckboxes() {
     var locationsContainer = document.getElementById("locations");
     locationsContainer.innerHTML = "";
 
-    for (var continent in continents) {
+    var categories = Object.keys(continents);
+
+    function showNextCategory(index) {
+        if (index >= categories.length) return;
+
+        var continent = categories[index];
         var continentDiv = document.createElement("div");
         continentDiv.className = "continent continent-row";  
         continentDiv.innerHTML = "<strong class='category-title'>" + continent + "</strong>";
@@ -583,9 +595,15 @@ function renderLocationCheckboxes() {
         var continentCheckbox = createContinentCheckbox(continent);
         continentSubDiv.appendChild(continentCheckbox);
 
-        locationsContainer.appendChild(document.createElement("br"));
+        setTimeout(function() {
+            continentDiv.classList.add('show');
+            showNextCategory(index + 1);
+        }, 200); 
     }
+
+    showNextCategory(0);
 }
+
 
 
 renderLocationCheckboxes();  
