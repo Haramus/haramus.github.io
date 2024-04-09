@@ -117,9 +117,7 @@
             justify-content: center;
             margin-top: 20px;
         }
-        .locationCheckbox {
-            margin: 5px;
-        }
+
         #buttons {
             margin-top: 40px;
         }
@@ -183,10 +181,45 @@
             font-weight: bold;
             font-family: Quicksand, Arial, sans-serif;
         }
-
         .category-container {
             text-align: left;
             background-color: #f5f5f4;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px); 
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0); 
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease forwards;
+        }
+        
+        .locationCheckbox  {
+            width: 10px;
+            height: 10px;
+            margin: 5px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            margin: 5px;
+            background-color: transparent;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+
+        .locationCheckbox:checked {
+            background-color: #3498db;
+            border-color: #3498db;
         }
 
         .custom-label {
@@ -501,7 +534,7 @@
     function createCheckbox(location) {
     var checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.className = "locationCheckbox";
+    checkbox.classList.add("locationCheckbox");
     checkbox.checked = selectedLocations[location];
     checkbox.addEventListener("change", function() {
         selectedLocations[location] = checkbox.checked;
@@ -582,12 +615,28 @@ function renderLocationCheckboxes() {
         continentSubDiv.appendChild(continentCheckbox);
 
         locationsContainer.appendChild(document.createElement("br"));
+        if (isanimated == true){
+            continentDiv.style.opacity = 1
+        }
     }
 }
 
 
 
-renderLocationCheckboxes();  
+renderLocationCheckboxes();
+var isanimated = false
+
+function animateCategories() {
+    if (!isanimated) {
+            var categoryContainers = document.querySelectorAll(".category-container");
+            categoryContainers.forEach(function(container, index) {
+            container.style.animationDelay = index * 0. + "s"; // 0.2s de délai progressif
+            container.classList.add("fade-in");
+            isanimated = true
+        });
+    }
+}
+
 
 
     function checkAll() {
@@ -603,8 +652,6 @@ renderLocationCheckboxes();
         }
         renderLocationCheckboxes();
     }
-
-    renderLocationCheckboxes();
 
     var guessInput = document.getElementById("guessInput");
     guessInput.addEventListener("keyup", function(event) {
@@ -685,6 +732,8 @@ renderLocationCheckboxes();
         }
 
     }
+
+    animateCategories();
 
 </script>
 
