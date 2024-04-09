@@ -630,7 +630,7 @@ function animateCategories() {
     if (!isanimated) {
             var categoryContainers = document.querySelectorAll(".category-container");
             categoryContainers.forEach(function(container, index) {
-            container.style.animationDelay = index * 0. + "s"; // 0.2s de délai progressif
+            container.style.animationDelay = index * 0.12 + "s"; // 0.2s de délai progressif
             container.classList.add("fade-in");
             isanimated = true
         });
