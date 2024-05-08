@@ -244,16 +244,26 @@
 </div>
 
 <div id="game">
-    <div id="map"></div>
-    <input type="text" id="guessInput" placeholder="Devinez le pays">
-    <div id="feedback"></div>
-    <div id="counter">Réussites: 0 | Erreurs: 0</div>
-    <div id="wrongGuesses">
-        <h2>Pays incorrects :</h2>
-        <ul id="wrongGuessesList"></ul>
-    </div>
-</div>
+    <div id="content-wrapper" style="display: flex; width: 100%;">
 
+        <!-- Contenu principal (87% de la largeur) -->
+        <div id="main-content" style="flex: 9; padding: 10px; display: flex; flex-direction: column; align-items: center;">
+            <div id="map"></div>
+            <input type="text" id="guessInput" placeholder="Devinez le lieu">
+            <div id="feedback"></div>
+        </div>
+    
+        <!-- Contenu secondaire (10% de la largeur) -->
+        <div id="secondary-content" style="flex: 1; padding: 10px;">
+            <div id="counter">Réussites: 0 | Erreurs: 0</div>
+            <div id="wrongGuesses">
+                <h2>Lieux incorrects :</h2>
+                <ul id="wrongGuessesList"></ul>
+            </div>
+        </div>
+    
+    </div> 
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
@@ -460,10 +470,7 @@
 
 
 
-    var countryKeys = Object.keys(countries).sort(() => Math.random() - 0.5);
-    var currentCountryIndex = 0;
-    var successes = 0;
-    var errors = 0;
+
 
     var continents = {
     "Union européenne": ["Autriche","Belgique","Bulgarie","Chypre","Croatie","Danemark","Espagne","Estonie","Finlande","France","Grèce","Hongrie","Irlande","Italie","Lettonie","Lituanie","Luxembourg","Malte","Pays-Bas","Pologne","Portugal","République tchèque","Roumanie","Slovaquie","Slovénie","Suède"],
@@ -523,6 +530,11 @@
 
     var currentMarker = L.marker([0, 0]).addTo(map);
     L.control.scale().addTo(map);
+
+    var countryKeys = Object.keys(countries).sort(() => Math.random() - 0.5);
+    var currentCountryIndex = 0;
+    var successes = 0;
+    var errors = 0;
 
     function updateMarker() {
         var currentCountry = countryKeys[currentCountryIndex];
@@ -676,7 +688,7 @@ function animateCategories() {
             errors++;
             wrongGuesses.push(currentCountry);
             updateWrongGuesses();
-            feedbackElement.textContent = "Incorrect! ❌ Le pays était : " + countryKeys[currentCountryIndex];
+            feedbackElement.textContent = "Incorrect! ❌ Le lieu était : " + countryKeys[currentCountryIndex];
         }
 
         counterElement.textContent = "Réussites: " + successes + " | Erreurs: " + errors;
@@ -716,7 +728,7 @@ function animateCategories() {
         });
 
         if (selectedCountryKeys.length === 0) {
-            alert("Veuillez sélectionner au moins un pays avant de commencer le jeu.");
+            alert("Veuillez sélectionner au moins un lieu avant de commencer le jeu.");
             return false;
         }
         return true
@@ -724,7 +736,7 @@ function animateCategories() {
 
     function startGame() {
         if (verifytostart()){
-            countryKeys.shift();
+            currentCountryIndex = getNextCountryIndex()
             document.getElementById("menu").style.display = "none";
             document.getElementById("game").style.display = "flex";
             updateMarker();
@@ -736,6 +748,5 @@ function animateCategories() {
     animateCategories();
 
 </script>
-
 </body>
 </html>
